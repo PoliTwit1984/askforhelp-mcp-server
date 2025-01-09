@@ -1,0 +1,20 @@
+{
+  "name": "second-opinion-server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "build/index.js",
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js",
+    "start": "node build/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "MCP server for getting second opinions on code using Gemini AI",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "file:/Users/joewilson/Documents/Cline/MCP/openai-docs-server/node_modules/@modelcontextprotocol/sdk",
+    "axios": "^1.6.2",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.4"
+  }
+}
