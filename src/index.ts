@@ -1,2 +1,5 @@
 #!/usr/bin/env node
-import './server.js';
+import { SecondOpinionServer } from './server.js';
+
+const server = new SecondOpinionServer();
+server.run().catch(console.error);

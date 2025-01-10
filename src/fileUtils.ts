@@ -3,13 +3,15 @@ import { promisify } from 'util';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { FileContext } from './types.js';
-import { LANGUAGE_MAP } from './config.js';
+import { LANGUAGE_MAP, FileExtension } from './config.js';
 
 const execAsync = promisify(exec);
 
 export async function detectFileLanguage(filePath: string): Promise<string> {
   const ext = path.extname(filePath).toLowerCase();
-  return LANGUAGE_MAP[ext] || 'Unknown';
+  return Object.prototype.hasOwnProperty.call(LANGUAGE_MAP, ext) 
+    ? LANGUAGE_MAP[ext as FileExtension] 
+    : 'Unknown';
 }
 
 export async function findRelevantFiles(

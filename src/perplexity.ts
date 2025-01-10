@@ -1,6 +1,18 @@
 import axios from 'axios';
 import { PERPLEXITY_API_KEY, API_ENDPOINTS } from './config.js';
-import { PerplexityMessage, PerplexityResponse } from './types.js';
+
+interface PerplexityMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+interface PerplexityResponse {
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
+}
 
 export async function getPerplexityInsights(
   error: string,

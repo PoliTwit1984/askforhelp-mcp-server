@@ -1,6 +1,13 @@
 // API Keys
-export const GEMINI_API_KEY = 'AIzaSyAFR_iXqYj2V-9xEQTwep77OU1Xi0ZIlfc';
-export const PERPLEXITY_API_KEY = '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';
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error('GEMINI_API_KEY environment variable is required');
+}
+if (!process.env.PERPLEXITY_API_KEY) {
+  throw new Error('PERPLEXITY_API_KEY environment variable is required');
+}
+
+export const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+export const PERPLEXITY_API_KEY = process.env.PERPLEXITY_API_KEY;
 
 // Stack Exchange API Configuration
 export const STACK_EXCHANGE_CONFIG = {
@@ -27,7 +34,9 @@ export const API_ENDPOINTS = {
 } as const;
 
 // Language Map for File Extensions
-export const LANGUAGE_MAP: { [key: string]: string } = {
+export type FileExtension = '.js' | '.ts' | '.jsx' | '.tsx' | '.py' | '.rb' | '.java' | '.go' | '.rs' | '.cpp' | '.c' | '.cs' | '.php' | '.swift' | '.kt' | '.scala' | '.html' | '.css' | '.scss' | '.sql';
+
+export const LANGUAGE_MAP: Record<FileExtension, string> = {
   '.js': 'JavaScript',
   '.ts': 'TypeScript',
   '.jsx': 'React/JavaScript',
@@ -48,4 +57,4 @@ export const LANGUAGE_MAP: { [key: string]: string } = {
   '.css': 'CSS',
   '.scss': 'SCSS',
   '.sql': 'SQL',
-} as const;
+};

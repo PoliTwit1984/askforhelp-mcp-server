@@ -15,9 +15,36 @@ const axiosInstance = axios.create({
 });
 
 function extractCodeBlocks(body: string): string[] {
-  const codeBlockRegex = /<code>([\s\S]*?)<\/code>/g;
+  // Match both inline <code> and block-level <pre><code> tags
+  const codeBlockRegex = /(?:<pre>)?<code>([\s\S]*?)<\/code>(?:<\/pre>)?/g;
   const matches = [...body.matchAll(codeBlockRegex)];
-  return matches.map(match => match[1].trim());
+  return matches.map(match => {
+    // Clean up HTML entities and common formatting issues
+    return match[1]
+      .trim()
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+  });
+}
+
+function stripHtml(html: string): string {
+  // More comprehensive HTML stripping while preserving formatting
+  return html
+    .replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, '\n```\n$1\n```\n') // Preserve code blocks
+    .replace(/<code>(.*?)<\/code>/g, '`$1`') // Preserve inline code
+    .replace(/<br\s*\/?>/g, '\n') // Convert breaks to newlines
+    .replace(/<\/p>/g, '\n\n') // Convert paragraph ends to double newlines
+    .replace(/<[^>]+>/g, '') // Remove remaining tags
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n{3,}/g, '\n\n') // Normalize multiple newlines
+    .trim();
 }
 
 function formatDate(timestamp: number): string {
@@ -69,20 +96,19 @@ export async function searchStackOverflow(query: string): Promise<string> {
       return '';
     }
 
-    // Fetch accepted answers
-    const answerIds = questions.map((q: StackOverflowQuestion) => q.accepted_answer_id).filter(Boolean).join(';');
-    if (!answerIds) {
-      console.error('No answer IDs found');
-      return '';
-    }
-    console.error('Fetching answers for IDs:', answerIds);
+    // Fetch both accepted and top-voted answers
+    const questionIds = questions.map((q: StackOverflowQuestion) => q.question_id).join(';');
+    console.error('Fetching answers for questions:', questionIds);
 
     const answersResponse = await axiosInstance.get<StackOverflowResponse<StackOverflowAnswer>>(
-      `https://api.stackexchange.com/2.3/answers/${answerIds}`,
+      `${API_ENDPOINTS.stackExchange.base}/questions/${questionIds}/answers`,
       {
         params: {
           ...commonParams,
           filter: STACK_EXCHANGE_CONFIG.filters.answer,
+          sort: 'votes',
+          pagesize: 3, // Get top 3 answers per question
+          order: 'desc',
         },
       }
     );
@@ -106,26 +132,32 @@ export async function searchStackOverflow(query: string): Promise<string> {
 
     // Format the results
     const results = questions.map((question: StackOverflowQuestion) => {
-      const answer = answersMap.get(question.accepted_answer_id);
-      if (!answer) {
-        console.error('No answer found for question:', question.title);
+      // Get all answers for this question
+      const questionAnswers = answers.filter((a: StackOverflowAnswer) => a.question_id === question.question_id)
+        .sort((a: StackOverflowAnswer, b: StackOverflowAnswer) => (b.score || 0) - (a.score || 0));
+
+      if (!questionAnswers.length) {
+        console.error('No answers found for question:', question.title);
         return '';
       }
 
-      const codeBlocks = extractCodeBlocks(answer.body || '');
-      console.error('Found code blocks:', codeBlocks.length);
+      // Format answers, highlighting the accepted one if it exists
+      const formattedAnswers = questionAnswers.map((answer: StackOverflowAnswer) => {
+        const isAccepted = answer.answer_id === question.accepted_answer_id;
+        const codeBlocks = extractCodeBlocks(answer.body || '');
+        const codeSection = codeBlocks.length
+          ? '\nCode Snippets:\n' + codeBlocks.map(code => '```\n' + code + '\n```').join('\n')
+          : '';
 
-      const codeSection = codeBlocks.length
-        ? '\nCode Snippets:\n' + codeBlocks.map(code => '```\n' + code + '\n```').join('\n')
-        : '';
+        return `${isAccepted ? '✓ Accepted Answer' : 'Answer'} (Score: ${answer.score || 0} | Posted: ${formatDate(answer.creation_date || 0)}):
+${stripHtml(answer.body || '')}${codeSection}`;
+      }).join('\n\n---\n\n');
 
       return `Question: ${question.title || 'Untitled'}
 Score: ${question.score || 0} | Tags: ${(question.tags || []).join(', ')} | Posted: ${formatDate(question.creation_date || 0)}
 ${question.link || ''}
 
-Accepted Answer (Score: ${answer.score || 0} | Posted: ${formatDate(answer.creation_date || 0)}):
-${(answer.body || '').replace(/<[^>]+>/g, '')}${codeSection}
-`;
+${formattedAnswers}`;
     }).filter(Boolean).join('\n---\n\n');
 
     return results || 'No relevant Stack Overflow results found.';
@@ -141,6 +173,6 @@ ${(answer.body || '').replace(/<[^>]+>/g, '')}${codeSection}
     } else {
       console.error('Error searching Stack Overflow:', error);
     }
-    return '';
+    return 'Error fetching Stack Overflow results. This might be due to rate limiting or network issues. Please try again later.';
   }
 }

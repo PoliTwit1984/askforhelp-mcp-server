@@ -34,12 +34,18 @@ npm run build
       "args": ["/path/to/second-opinion-server/build/index.js"],
       "env": {
         "GEMINI_API_KEY": "your-gemini-api-key",
-        "PERPLEXITY_API_KEY": "your-perplexity-api-key"
+        "PERPLEXITY_API_KEY": "your-perplexity-api-key",
+        "STACK_EXCHANGE_KEY": "your-stack-exchange-key"
       }
     }
   }
 }
 ```
+
+Required environment variables:
+- `GEMINI_API_KEY`: Google's Gemini AI API key
+- `PERPLEXITY_API_KEY`: Perplexity AI API key
+- `STACK_EXCHANGE_KEY`: Stack Exchange API key (optional, uses anonymous access if not provided)
 
 ## Usage
 

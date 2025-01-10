@@ -38,16 +38,3 @@ export interface StackOverflowResponse<T> {
   quota_remaining: number;
   total: number;
 }
-
-export interface PerplexityMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-export interface PerplexityResponse {
-  choices: Array<{
-    message: {
-      content: string;
-    };
-  }>;
-}
