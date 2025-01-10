@@ -1,105 +1,17 @@
 # Second Opinion MCP Server
 
-An MCP server that provides AI-powered assistance for coding problems using Google's Gemini AI, enhanced with Perplexity insights and Stack Overflow references.
+An MCP server that provides AI-powered assistance for coding problems by combining insights from:
+- Google's Gemini AI
+- Stack Overflow accepted answers
+- Perplexity AI analysis
 
 ## Features
 
-### Multi-AI Analysis
-- Primary insights from Google's Gemini AI
-- Additional analysis from Perplexity AI
-- Relevant Stack Overflow references
-
-### Automatic Context Gathering
-- File content analysis
-- Related file discovery through git grep
-- Language detection
-- Smart file searching
-
-### Response Archiving
-- Automatically saves responses as markdown files
-- Organizes by timestamp and query
-- Includes full context (goal, error, code, solutions tried)
-- Creates a searchable knowledge base
-
-## Usage
-
-The server provides a single tool `get_second_opinion` that accepts:
-
-```typescript
-{
-  goal: string;           // Required: What you're trying to accomplish
-  error?: string;         // Optional: Any error messages
-  code?: string;          // Optional: Relevant code context
-  solutionsTried?: string; // Optional: Previous attempts
-  filePath?: string;      // Optional: Path to file for automatic context gathering
-}
-```
-
-### Example Query
-
-Here's a real example of using the server to solve a React useEffect cleanup issue:
-
-```typescript
-use_mcp_tool({
-  server_name: "second-opinion",
-  tool_name: "get_second_opinion",
-  arguments: {
-    goal: "Fix a React useEffect cleanup issue",
-    error: "Warning: Can't perform a React state update on an unmounted component. This is a no-op, but it indicates a memory leak in your application.",
-    code: `function DataFetcher() {
-  const [data, setData] = useState(null);
-
-  useEffect(() => {
-    fetch('https://api.example.com/data')
-      .then(res => res.json())
-      .then(json => setData(json));
-  }, []);
-
-  return <div>{data ? JSON.stringify(data) : 'Loading...'}</div>;
-}`,
-    solutionsTried: "I tried adding a return function to useEffect but still getting the warning sometimes"
-  }
-})
-```
-
-### Example Response
-
-The server combines insights from multiple sources to provide a comprehensive solution:
-
-#### Perplexity AI Analysis
-```
-Common causes for this warning in React:
-1. Asynchronous operations continuing after component unmount
-2. Missing or incorrect cleanup in useEffect
-3. State updates on unmounted components
-4. Race conditions with multiple async operations
-
-The warning typically occurs when async operations like API calls or timers try to update state after the component is no longer in the DOM.
-```
-
-#### Stack Overflow References
-```
-Related discussions:
-1. "React setState warning - Can't perform a React state update on an unmounted component"
-   Shows patterns for proper cleanup with useEffect and async operations
-
-2. "How to cancel fetch requests in useEffect cleanup"
-   Demonstrates using AbortController for proper fetch cleanup
-
-3. "Best practices for handling async operations in React components"
-   Covers patterns for managing component lifecycle with async operations
-```
-
-#### Gemini AI Solution
-The solution provided by Gemini AI (shown above) includes:
-1. Detailed explanation of the problem
-2. Code example with proper cleanup implementation
-3. Multiple approaches (isMounted flag, AbortController)
-4. Performance considerations
-5. Testing strategies
-6. Alternative approaches using different libraries
-
-Each response is automatically saved as a markdown file in the `responses` directory for future reference.
+- Get detailed solutions for coding problems with context from multiple sources
+- Automatic language detection from file extensions
+- Code snippet extraction and formatting
+- Markdown report generation for solutions
+- Git-aware file context gathering
 
 ## Setup
 
@@ -113,7 +25,7 @@ npm install
 npm run build
 ```
 
-3. Add to your MCP settings file:
+3. Configure environment variables in MCP settings:
 ```json
 {
   "mcpServers": {
@@ -129,8 +41,48 @@ npm run build
 }
 ```
 
-## Requirements
+## Usage
 
-- Node.js >= 18.20.4
-- TypeScript
-- Git (for related file discovery feature)
+The server provides a single tool:
+
+### get_second_opinion
+
+Get AI-powered insights and solutions for coding problems.
+
+**Input Schema:**
+```json
+{
+  "goal": "string (required) - What you're trying to accomplish",
+  "error": "string (optional) - Any error messages you're seeing",
+  "code": "string (optional) - Relevant code context",
+  "solutionsTried": "string (optional) - What solutions you've already tried",
+  "filePath": "string (optional) - Path to the file with the issue"
+}
+```
+
+**Example:**
+```json
+{
+  "goal": "Fix TypeScript error in React component",
+  "error": "Type '{ children: ReactNode; onClick: () => void; }' is not assignable to type 'IntrinsicAttributes'",
+  "code": "interface Props {\n  onClick: () => void;\n}\n\nfunction Button({ children, onClick }: Props) {\n  return <button onClick={onClick}>{children}</button>;\n}",
+  "solutionsTried": "Tried adding children to Props interface"
+}
+```
+
+## Project Structure
+
+```
+src/
+├── config.ts        # Configuration and API settings
+├── fileUtils.ts     # File operations and language detection
+├── index.ts         # Entry point
+├── perplexity.ts   # Perplexity AI integration
+├── server.ts       # MCP server implementation
+├── stackOverflow.ts # Stack Overflow API integration
+└── types.ts        # TypeScript interfaces
+```
+
+## Known Issues
+
+See [errors.md](./errors.md) for current issues and workarounds.
